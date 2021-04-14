@@ -1,140 +1,127 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import './ConversorMoedas.css';
-import { Jumbotron, Button, Form, Col, Spinner, Alert, Modal } from 'react-bootstrap'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAngleDoubleRight } from "@fortawesome/free-solid-svg-icons"
-import ListarMoedas from './Listar-Moedas'
-import axios from 'axios'
+import {
+  Jumbotron, Button, Form, Col, Spinner, Alert, Modal
+} from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons';
+import ListarMoedas from './listar-moedas';
+import axios from 'axios';
 
 function ConversorMoedas() {
 
   const FIXER_URL = 'http://data.fixer.io/api/latest?access_key=eba7130a5b2d720ce43eb5fcddd47cc3';
 
-  const [valor, setValor] = useState('1')
-  const [moedaDe, setMoedaDe] = useState('BRL')
-  const [moedaPara, setMoedaPara] = useState('USD')
-  const [exibirSpinner, setExibirSpinner] = useState(false)
-  const [formValidado, setFormValidado] = useState(false)
-  const [exibirModal, setExibirModal] = useState(false)
-  const [resultadoConversao, setResultadoConversao] = useState('')
+  const [valor, setValor] = useState('1');
+  const [moedaDe, setMoedaDe] = useState('BRL');
+  const [moedaPara, setMoedaPara] = useState('USD');
+  const [exibirSpinner, setExibirSpinner] = useState(false);
+  const [formValidado, setFormValidado] = useState(false);
+  const [exibirModal, setExibirModal] = useState(false);
+  const [resultadoConversao, setResultadoConversao] = useState('');
+  const [exibirMsgErro, setExibirMsgErro] = useState(false);
 
   function handleValor(event) {
-    setValor(event.target.value.replace(/\D/g, ''))
+    setValor(event.target.value.replace(/\D/g, ''));
   }
 
   function handleMoedaDe(event) {
-    setMoedaDe(event.target.value)
+    setMoedaDe(event.target.value);
   }
 
   function handleMoedaPara(event) {
-    setMoedaPara(event.target.value)
+    setMoedaPara(event.target.value);
   }
 
   function handleFecharModal(event) {
-    setValor('1')
-    setMoedaDe('BRL')
-    setMoedaPara('USD')
-    setFormValidado(false)
-    setExibirModal(false)
+    setValor('1');
+    setMoedaDe('BRL');
+    setMoedaPara('USD');
+    setFormValidado(false);
+    setExibirModal(false);
   }
 
-  // function para não atualizar a página
   function converter(event) {
-    event.preventDefault()
-    setFormValidado(true)
+    event.preventDefault();
+    setFormValidado(true);
     if (event.currentTarget.checkValidity() === true) {
-      setExibirSpinner(true)
+      setExibirSpinner(true);
       axios.get(FIXER_URL)
         .then(res => {
-          const cotacao = obterCotacao(res.data)
-        })
-      
+          const cotacao = obterCotacao(res.data);
+          if (cotacao) {
+            setResultadoConversao(`${valor} ${moedaDe} = ${cotacao} ${moedaPara}`);
+            setExibirModal(true);
+            setExibirSpinner(false);
+            setExibirMsgErro(false);
+          } else {
+            exibirErro();
+          }
+        }).catch(err => exibirErro());
     }
   }
-  // end function para não atualizar a página
 
   function obterCotacao(dadosCotacao) {
     if (!dadosCotacao || dadosCotacao.success !== true) {
-      return false
+      return false;
     }
-    const cotacaoDe = dadosCotacao.rates[moedaDe]
-    const cotacaoPara = dadosCotacao.rates[moedaPara]
-    const cotacao = (1 / cotacao * cotacaoPara) * valor
-    return cotacao.toFixed(2)
+    const cotacaoDe = dadosCotacao.rates[moedaDe];
+    const cotacaoPara = dadosCotacao.rates[moedaPara];
+    const cotacao = (1 / cotacaoDe * cotacaoPara) * valor;
+    return cotacao.toFixed(2);
   }
 
-
+  function exibirErro() {
+    setExibirMsgErro(true);
+    setExibirSpinner(false);
+  }
 
   return (
     <div>
-      <h1>Conversor de Moedas</h1>
-      <Alert variant="danger" show={false}>
-        Erro obtendo dados de conversão, tente novamente!
+      <h1>Conversor de moedas</h1>
+      <Alert variant="danger" show={exibirMsgErro}>
+        Erro obtendo dados de conversão, tente novamente.
       </Alert>
       <Jumbotron>
         <Form onSubmit={converter} noValidate validated={formValidado}>
-        {/* metodo de envio onSubmit para não atualizar a página*/}
-        {/*noValidate para não atualizar a página*/}
           <Form.Row>
-
-            {/* valor */}
             <Col sm="3">
-              <Form.Control placeholder="0" value={valor} onChange={handleValor} required />
-              {/* segunda maneira sem function e mais facil porem o replace não funciona aqui  */}
-              {/* <Form.Control placeholder="0" value={valor} onChange={(e) => setValor(e.target.valeu)} required /> */}
-              {/* end segunda maneira sem function e mais facil porem o replace não funciona aqui  */}
+              <Form.Control
+                placeholder="0"
+                value={valor}
+                onChange={handleValor}
+                required />
             </Col>
-            {/*end valor */}
-
-            {/* moedaDe */}
             <Col sm="3">
-              <Form.Control as="select" value={moedaDe} onChange={handleMoedaDe} >
-                {/* segunda maneira sem function e mais facil  */}
-                {/* <Form.Control as="select" value={moedaDe} onChange={(e) => setmoedaDe(e.target.value)} > */}
-                {/* end segunda maneira sem function e mais facil  */}
+              <Form.Control as="select"
+                value={moedaDe}
+                onChange={handleMoedaDe}>
                 <ListarMoedas />
               </Form.Control>
             </Col>
-            {/*end moedaDe */}
-
-            {/* icon */}
-            <Col sm="1" className="text-center" style={{ paddingTop: '5px' }}>
+            <Col sm="1" className="text-center" style={{paddingTop:'5px'}}>
               <FontAwesomeIcon icon={faAngleDoubleRight} />
             </Col>
-            {/*end  icon */}
-
-            {/* moedaPara */}
             <Col sm="3">
-              <Form.Control as="select" value={moedaPara} onChange={handleMoedaPara} >
-                {/* segunda maneira sem function e mais facil  */}
-                {/* <Form.Control as="select" value={moedaPara} onChange={(e) => setmoedaPara(e.target.value)} > */}
-                {/* end segunda maneira sem function e mais facil  */}
+              <Form.Control as="select"
+                value={moedaPara}
+                onChange={handleMoedaPara}>
                 <ListarMoedas />
               </Form.Control>
             </Col>
-            {/*end moedaPara */}
-
-            {/* submit */}
             <Col sm="2">
-              <Button variant="success" type="submit">
+              <Button variant="success" type="submit" data-testid="btn-converter">
                 <span className={exibirSpinner ? null : 'hidden'}>
-                  {/* aqui o exibirSpinner NÃO vai aparecer caso estiver em false */}
-                  {/* null e false é a mesma coisa */}
                   <Spinner animation="border" size="sm" />
                 </span>
                 <span className={exibirSpinner ? 'hidden' : null}>
-                  {/* aqui o exibirSpinner vai aparecer caso estiver em true */}
-                  {/* null e false é a mesma coisa */}
                   Converter
                 </span>
               </Button>
             </Col>
-            {/*end submit */}
-
           </Form.Row>
         </Form>
-
-        <Modal show={exibirModal} onHide={handleFecharModal}>
+        <Modal show={exibirModal} onHide={handleFecharModal} data-testid="modal">
           <Modal.Header closeButton>
             <Modal.Title>Conversão</Modal.Title>
           </Modal.Header>
@@ -147,10 +134,9 @@ function ConversorMoedas() {
             </Button>
           </Modal.Footer>
         </Modal>
-
       </Jumbotron>
     </div>
-  )
+  );
 }
 
-export default ConversorMoedas; 
+export default ConversorMoedas;
